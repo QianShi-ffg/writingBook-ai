@@ -1,10 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { syncDb, Book, Character, Chapter, Realm, Setting, Reference } from './db';
 import OpenAI from 'openai';
+import { syncDb, Book, Character, Chapter, Realm, Setting, Reference } from './db';
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = Number(process.env.PORT) || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -307,6 +308,6 @@ app.post('/api/writing/generate-stream', async (req, res) => {
   }
 });
 
-app.listen('3002', () => {
+app.listen(PORT, () => {
   console.log(`服务已启动，监听端口 ${PORT}`);
 });

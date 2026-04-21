@@ -1,11 +1,22 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 
-// 初始化 Sequelize 实例
-export const sequelize = new Sequelize('test1', 'test1', 'Ac7jEhNRPeAkF6pJ', {
-  host: '111.229.124.159',
+const requireEnv = (key: string) => {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing env: ${key}`);
+  return value;
+};
+
+export const sequelize = new Sequelize(
+  requireEnv('DB_NAME'),
+  requireEnv('DB_USER'),
+  requireEnv('DB_PASSWORD'),
+  {
+    host: requireEnv('DB_HOST'),
+    port: Number(process.env.DB_PORT) || 3306,
   dialect: 'mysql',
   logging: false, // 设置为 console.log 可查看执行的 SQL
-});
+  }
+);
 
 // Book 模型
 export class Book extends Model {}

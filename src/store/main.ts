@@ -12,6 +12,7 @@ export const useMainStore = defineStore('main', {
     references: [] as Reference[],
     settings: {} as Settings,
     loading: false,
+    error: '' as string,
     activeRequestController: null as AbortController | null,
   }),
   getters: {
@@ -164,7 +165,8 @@ export const useMainStore = defineStore('main', {
         const timeoutId = setTimeout(() => controller.abort(), 600000);
         
         try {
-          const response = await fetch('http://localhost:3002/api/writing/generate-stream', {
+          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
+          const response = await fetch(`${apiBaseUrl}/writing/generate-stream`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
