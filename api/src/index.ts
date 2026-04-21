@@ -6,6 +6,9 @@ import { syncDb, Book, Character, Chapter, Realm, Setting, Reference } from './d
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3002;
+const DEFAULT_LLM_PROVIDER = process.env.LLM_PROVIDER || 'openai';
+const DEFAULT_OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 
 app.use(cors());
 app.use(express.json());
@@ -18,15 +21,15 @@ const getOpenAIClient = async () => {
   let setting: any = await Setting.findOne();
   if (!setting) {
     setting = await Setting.create({
-      llmProvider: 'openai',
-      baseUrl: 'https://api.openai.com/v1',
-      model: 'gpt-3.5-turbo',
-      apiKey: ''
+      llmProvider: DEFAULT_LLM_PROVIDER,
+      baseUrl: DEFAULT_OPENAI_BASE_URL,
+      model: DEFAULT_OPENAI_MODEL,
+      apiKey: process.env.OPENAI_API_KEY || ''
     });
   }
   return new OpenAI({
     apiKey: setting.apiKey || process.env.OPENAI_API_KEY || '',
-    baseURL: setting.baseUrl || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    baseURL: setting.baseUrl || DEFAULT_OPENAI_BASE_URL,
     timeout: 600000, // 设置后端 OpenAI 客户端的超时时间为 10 分钟
   });
 };
@@ -186,10 +189,10 @@ app.get('/api/settings', async (req, res) => {
   let setting = await Setting.findOne();
   if (!setting) {
     setting = await Setting.create({
-      llmProvider: 'openai',
-      baseUrl: 'https://api.openai.com/v1',
-      model: 'gpt-3.5-turbo',
-      apiKey: ''
+      llmProvider: DEFAULT_LLM_PROVIDER,
+      baseUrl: DEFAULT_OPENAI_BASE_URL,
+      model: DEFAULT_OPENAI_MODEL,
+      apiKey: process.env.OPENAI_API_KEY || ''
     });
   }
   res.json(setting);
@@ -238,7 +241,7 @@ app.post('/api/writing/generate', async (req, res) => {
     const { prompt, systemPrompt, maxTokens = 1000 } = req.body;
     const openai = await getOpenAIClient();
     const setting: any = await Setting.findOne();
-    const model = setting?.model || 'gpt-3.5-turbo';
+    const model = setting?.model || DEFAULT_OPENAI_MODEL;
 
     const response = await openai.chat.completions.create({
       model,
@@ -267,7 +270,7 @@ app.post('/api/writing/generate-stream', async (req, res) => {
     
     console.log('[DEBUG] Getting Settings from DB...');
     const setting: any = await Setting.findOne();
-    const model = setting?.dataValues?.model || setting?.model || 'gpt-3.5-turbo';
+    const model = setting?.dataValues?.model || setting?.model || DEFAULT_OPENAI_MODEL;
     console.log('[DEBUG] Using Model:', model);
 
     console.log('[DEBUG] Requesting OpenAI Chat Completions...');

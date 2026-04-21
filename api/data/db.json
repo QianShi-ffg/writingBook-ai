@@ -1,9 +1,9 @@
 {
   "settings": {
     "llmProvider": "openai",
-    "apiKey": "sk-b596ed8276ef4d1abf4573422ae4f309",
-    "model": "deepseek-reasoner",
-    "baseUrl": "https://api.deepseek.com"
+    "apiKey": "",
+    "model": "",
+    "baseUrl": ""
   },
   "books": [
     {
