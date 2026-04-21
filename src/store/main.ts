@@ -13,16 +13,16 @@ export const useMainStore = defineStore('main', {
     settings: {} as Settings,
     loading: false,
     error: '' as string,
-    activeRequestController: null as AbortController | null,
+    activeRequestControllers: [] as AbortController[],
   }),
   getters: {
     // ...
   },
   actions: {
     abortCurrentGeneration() {
-      if (this.activeRequestController) {
-        this.activeRequestController.abort();
-        this.activeRequestController = null;
+      if (this.activeRequestControllers.length > 0) {
+        this.activeRequestControllers.forEach(controller => controller.abort());
+        this.activeRequestControllers = [];
       }
     },
     async fetchBooks() {
@@ -149,8 +149,15 @@ export const useMainStore = defineStore('main', {
       this.settings = data;
     },
     async generateContent(prompt: string, systemPrompt?: string, maxTokens?: number) {
-      const { data } = await apiClient.post('/writing/generate', { prompt, systemPrompt, maxTokens });
-      return data.text;
+      try {
+        const { data } = await apiClient.post('/writing/generate', { prompt, systemPrompt, maxTokens });
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        return data.text || '';
+      } catch (e: any) {
+        throw new Error(e.response?.data?.error || e.message || 'Unknown generation error');
+      }
     },
     async generateContentStream(
       prompt: string, 
@@ -160,10 +167,14 @@ export const useMainStore = defineStore('main', {
     ) {
       return new Promise<void>(async (resolve, reject) => {
         const controller = new AbortController();
-        this.activeRequestController = controller;
+        this.activeRequestControllers.push(controller);
         // 设置 10 分钟超长超时，适配代理和缓慢的大模型
         const timeoutId = setTimeout(() => controller.abort(), 600000);
         
+        const cleanup = () => {
+          this.activeRequestControllers = this.activeRequestControllers.filter(c => c !== controller);
+        };
+
         try {
           const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
           const response = await fetch(`${apiBaseUrl}/writing/generate-stream`, {
@@ -198,12 +209,14 @@ export const useMainStore = defineStore('main', {
               if (line.startsWith('data: ')) {
                 const dataStr = line.slice(6);
                 if (dataStr === '[DONE]') {
+                  cleanup();
                   resolve();
                   return;
                 }
                 try {
                   const data = JSON.parse(dataStr);
                   if (data.error) {
+                    cleanup();
                     reject(new Error(data.error));
                     return;
                   }
@@ -214,8 +227,10 @@ export const useMainStore = defineStore('main', {
               }
             }
           }
+          cleanup();
           resolve();
         } catch (e: any) {
+          cleanup();
           clearTimeout(timeoutId);
           if (e.name === 'AbortError') {
             reject(new Error('请求超时，请检查大模型 API 接口网络连通性'));

@@ -238,7 +238,7 @@ app.delete('/api/references/:id', async (req, res) => {
 // AI Generation API
 app.post('/api/writing/generate', async (req, res) => {
   try {
-    const { prompt, systemPrompt, maxTokens = 1000 } = req.body;
+    const { prompt, systemPrompt, maxTokens = 8000 } = req.body;
     const openai = await getOpenAIClient();
     const setting: any = await Setting.findOne();
     const model = setting?.model || DEFAULT_OPENAI_MODEL;
