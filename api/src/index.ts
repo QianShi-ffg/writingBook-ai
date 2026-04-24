@@ -37,15 +37,33 @@ const getOpenAIClient = async () => {
 // Books API
 app.get('/api/books', async (req, res) => {
   console.log('111111111111111');
-  const books = await Book.findAll();
-  res.json(books);
+  const books = await Book.findAll({
+    include: [{
+      model: Chapter,
+      attributes: ['id', 'wordCount']
+    }]
+  });
+  
+  const booksWithStats = books.map((book: any) => {
+    const bookJson = book.toJSON();
+    const chapters = bookJson.Chapters || [];
+    bookJson.chapterCount = chapters.length;
+    bookJson.wordCount = chapters.reduce((sum: number, ch: any) => sum + (ch.wordCount || 0), 0);
+    delete bookJson.Chapters;
+    return bookJson;
+  });
+  
+  res.json(booksWithStats);
 });
 
 app.post('/api/books', async (req, res) => {
    console.log('22222222222222');
   try {
     const newBook = await Book.create(req.body);
-    res.json(newBook);
+    const bookJson = newBook.toJSON() as any;
+    bookJson.chapterCount = 0;
+    bookJson.wordCount = 0;
+    res.json(bookJson);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create book' });
   }

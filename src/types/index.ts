@@ -2,9 +2,12 @@ export interface Book {
   id: string;
   title: string;
   type: string;
+  description?: string;
   outline?: string;
   outlineTree?: string;
   worldview?: string;
+  chapterCount?: number;
+  wordCount?: number;
   createdAt: string;
   updatedAt: string;
 }

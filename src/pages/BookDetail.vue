@@ -17,6 +17,7 @@ const bookId = computed(() => route.params.id as string);
 
 const generating = ref(false);
 const cascadeGenerating = ref(false);
+const cascadeTitle = ref('AI 一键衍生设定生成中...');
 const cascadeProgress = ref('');
 const newOutlineIdea = ref('');
 const newWorldviewIdea = ref('');
@@ -977,14 +978,25 @@ const saveChapter = async () => {
   });
 };
 
+const manualSaveChapter = async () => {
+  await saveChapter();
+  showMessage('内容已更新保存，正在为您重新梳理剧情...', 'success');
+  await summarizeChapter();
+};
+
 const changeChapterStatus = async (status: 'draft' | 'reviewing' | 'completed', preventAuto = false) => {
   if (!activeChapterId.value) return;
   await store.updateChapter(activeChapterId.value, { status });
   
   // 切换到已定稿时：只更新人物卡片和伏笔暗线
   if (status === 'completed' && !preventAuto) {
-    updateCharactersFromChapter();
-    updateCluesFromChapter();
+    cascadeTitle.value = '正在更新设定...';
+    cascadeProgress.value = '正文已定稿，正在自动更新人物卡片和伏笔暗线...';
+    cascadeGenerating.value = true;
+    await updateCharactersFromChapter();
+    await updateCluesFromChapter();
+    cascadeGenerating.value = false;
+    showMessage('设定更新完成！', 'success');
   }
 
   // 切换到审核修改状态时：触发主编审核并自动弹出修改
@@ -1439,15 +1451,15 @@ const applyReviseResult = async () => {
     // 点击是：定稿
     await changeChapterStatus('completed', true);
     await saveChapter();
-    triggerPostReviseSummary();
+    triggerPostReviseSummary(true);
   }, async () => {
     // 点击否：保持在 review 状态并保存当前内容
     await saveChapter();
-    triggerPostReviseSummary();
+    triggerPostReviseSummary(false);
   });
 };
 
-const triggerPostReviseSummary = async () => {
+const triggerPostReviseSummary = async (isCompleted: boolean) => {
   // 一键修改完成后自动重新进行本章梳理
   if (currentChapterContent.value) {
     summaryGenerating.value = true;
@@ -1470,19 +1482,36 @@ ${currentChapterContent.value}`;
         scrollToSummaryBottom();
       });
       await saveChapter();
-      showMessage('一键修改及自动剧情梳理全部完成！正在更新设定...', 'success');
-      // 修改完成后再次更新人物卡片以防内容变化
-      updateCharactersFromChapter();
-      updateCluesFromChapter();
+      
+      if (isCompleted) {
+        cascadeTitle.value = '正在更新设定...';
+        cascadeProgress.value = '一键修改完成！正文已重写，正在更新人物卡片和伏笔暗线...';
+        cascadeGenerating.value = true;
+        await updateCharactersFromChapter();
+        await updateCluesFromChapter();
+        cascadeGenerating.value = false;
+        showMessage('设定更新完成！', 'success');
+      } else {
+        showMessage('剧情梳理完成！请继续手动修改。', 'success');
+      }
     } catch (err: any) {
       showMessage('自动剧情梳理失败: ' + err.message, 'error');
     } finally {
       summaryGenerating.value = false;
+      cascadeGenerating.value = false;
     }
   } else {
-    showMessage('一键修改完成！正文已根据审核意见重写。正在更新设定...', 'success');
-    updateCharactersFromChapter();
-    updateCluesFromChapter();
+    if (isCompleted) {
+      cascadeTitle.value = '正在更新设定...';
+      cascadeProgress.value = '正文已更新，正在更新人物卡片和伏笔暗线...';
+      cascadeGenerating.value = true;
+      await updateCharactersFromChapter();
+      await updateCluesFromChapter();
+      cascadeGenerating.value = false;
+      showMessage('设定更新完成！', 'success');
+    } else {
+      showMessage('一键修改完成！正文已重写，请继续手动修改。', 'success');
+    }
   }
 };
 
@@ -2111,7 +2140,7 @@ const tabs = [
                     <el-option label="🔍 审核修改" value="reviewing" />
                     <el-option label="✅ 已定稿" value="completed" />
                   </el-select>
-                  <el-button @click="saveChapter" text size="small">
+                  <el-button @click="manualSaveChapter" text size="small">
                     <Save class="icon-sm" style="margin-right: 4px;" /> 保存
                   </el-button>
                 </div>
@@ -2568,9 +2597,9 @@ const tabs = [
     </div>
     <div v-if="cascadeGenerating" class="modal-overlay" style="z-index: 9999; flex-direction: column; gap: 1.5rem;">
       <div class="spinner"></div>
-      <h2 style="color: white; font-size: 1.5rem; font-family: var(--font-mono);">AI 一键衍生设定生成中...</h2>
+      <h2 style="color: white; font-size: 1.5rem; font-family: var(--font-mono);">{{ cascadeTitle }}</h2>
       <p style="color: var(--color-text-muted); font-size: 1rem;">{{ cascadeProgress }}</p>
-      <el-button @click="store.abortCurrentGeneration()" type="danger" style="margin-top: 1rem;">
+      <el-button v-if="!cascadeTitle.includes('更新设定')" @click="store.abortCurrentGeneration()" type="danger" style="margin-top: 1rem;">
         <StopCircle class="icon-sm" style="margin-right: 4px;" /> 停止生成
       </el-button>
     </div>
@@ -3021,7 +3050,7 @@ const tabs = [
 }
 
 .summary-panel {
-  width: 300px;
+  width: 450px;
   background-color: var(--color-primary);
   border-left: 1px solid var(--color-border);
   display: flex;
@@ -3063,8 +3092,8 @@ const tabs = [
 }
 
 .kpi-label {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
+  font-size: 0.90rem;
+  color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

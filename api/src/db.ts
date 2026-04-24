@@ -24,6 +24,7 @@ Book.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   title: { type: DataTypes.STRING, allowNull: false },
   type: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT('long') },
   outline: { type: DataTypes.TEXT('long') },
   outlineTree: { type: DataTypes.TEXT('long') },
   worldview: { type: DataTypes.TEXT('long') },

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `Books` (
   `id` CHAR(36) NOT NULL PRIMARY KEY COMMENT '书籍ID (UUID)',
   `title` VARCHAR(255) NOT NULL COMMENT '书名',
   `type` VARCHAR(255) NOT NULL COMMENT '类型(如修仙、玄幻)',
+  `description` LONGTEXT DEFAULT NULL COMMENT '简介',
   `outline` LONGTEXT DEFAULT NULL COMMENT '一句话大纲',
   `outlineTree` LONGTEXT DEFAULT NULL COMMENT '树状细化大纲(JSON)',
   `worldview` LONGTEXT DEFAULT NULL COMMENT '世界观背景设定',
@@ -82,6 +83,20 @@ CREATE TABLE IF NOT EXISTS `References` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资料库表';
 
 -- --------------------------------------------------------
+-- 表结构: Clues (伏笔/暗线)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Clues` (
+  `id` CHAR(36) NOT NULL PRIMARY KEY COMMENT '伏笔ID (UUID)',
+  `bookId` CHAR(36) NOT NULL COMMENT '所属书籍ID',
+  `title` VARCHAR(255) NOT NULL COMMENT '伏笔标题',
+  `content` LONGTEXT DEFAULT NULL COMMENT '伏笔内容/详情',
+  `status` VARCHAR(255) DEFAULT 'active' COMMENT '状态(active未回收/resolved已回收)',
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_clues_book` FOREIGN KEY (`bookId`) REFERENCES `Books` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='伏笔暗线表';
+
+-- --------------------------------------------------------
 -- 表结构: Settings
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `Settings` (
@@ -101,3 +116,4 @@ CREATE INDEX `idx_chapters_book` ON `Chapters` (`bookId`);
 CREATE INDEX `idx_characters_book` ON `Characters` (`bookId`);
 CREATE INDEX `idx_realms_book` ON `Realms` (`bookId`);
 CREATE INDEX `idx_references_book` ON `References` (`bookId`);
+CREATE INDEX `idx_clues_book` ON `Clues` (`bookId`);
