@@ -12,8 +12,10 @@
     "lint:fix": "eslint . --ext .ts,.vue --fix"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.15.1",
     "clsx": "^2.1.1",
+    "element-plus": "^2.13.7",
     "lucide-vue-next": "^0.511.0",
     "md-editor-v3": "^6.4.2",
     "pinia": "^3.0.4",

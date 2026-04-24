@@ -13,8 +13,8 @@ export const sequelize = new Sequelize(
   {
     host: requireEnv('DB_HOST'),
     port: Number(process.env.DB_PORT) || 3306,
-  dialect: 'mysql',
-  logging: false, // 设置为 console.log 可查看执行的 SQL
+    dialect: 'mysql',
+    logging: false, // 设置为 console.log 可查看执行的 SQL
   }
 );
 
@@ -75,6 +75,16 @@ Reference.init({
   content: { type: DataTypes.TEXT('long') },
 }, { sequelize, modelName: 'Reference' });
 
+// Clue 模型 (伏笔/暗线)
+export class Clue extends Model {}
+Clue.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  bookId: { type: DataTypes.UUID, allowNull: false },
+  title: { type: DataTypes.STRING, allowNull: false },
+  content: { type: DataTypes.TEXT('long') },
+  status: { type: DataTypes.STRING, defaultValue: 'active' } // active(未回收), resolved(已回收)
+}, { sequelize, modelName: 'Clue' });
+
 // Setting 模型 (仅存一条记录)
 export class Setting extends Model {}
 Setting.init({
@@ -97,6 +107,9 @@ Realm.belongsTo(Book, { foreignKey: 'bookId' });
 
 Book.hasMany(Reference, { foreignKey: 'bookId', onDelete: 'CASCADE' });
 Reference.belongsTo(Book, { foreignKey: 'bookId' });
+
+Book.hasMany(Clue, { foreignKey: 'bookId', onDelete: 'CASCADE' });
+Clue.belongsTo(Book, { foreignKey: 'bookId' });
 
 // 同步数据库
 export const syncDb = async () => {

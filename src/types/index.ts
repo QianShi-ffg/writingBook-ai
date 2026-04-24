@@ -57,6 +57,18 @@ export interface Reference {
   bookId: string;
   sourceName: string;
   content: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Clue {
+  id: string;
+  bookId: string;
+  title: string;
+  content: string;
+  status: 'active' | 'resolved';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Settings {

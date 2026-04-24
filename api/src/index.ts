@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { syncDb, Book, Character, Chapter, Realm, Setting, Reference } from './db';
+import { syncDb, Book, Character, Chapter, Realm, Setting, Reference, Clue } from './db';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3002;
@@ -181,6 +181,39 @@ app.delete('/api/realms/:id', async (req, res) => {
     res.json(realm);
   } else {
     res.status(404).json({ error: 'Realm not found' });
+  }
+});
+
+// Clues API (伏笔暗线)
+app.get('/api/clues', async (req, res) => {
+  const { bookId } = req.query;
+  const clues = bookId ? await Clue.findAll({ where: { bookId: bookId as string } }) : await Clue.findAll();
+  res.json(clues);
+});
+app.post('/api/clues', async (req, res) => {
+  try {
+    const newClue = await Clue.create(req.body);
+    res.json(newClue);
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+  }
+});
+app.put('/api/clues/:id', async (req, res) => {
+  const clue = await Clue.findByPk(req.params.id);
+  if (clue) {
+    await clue.update(req.body);
+    res.json(clue);
+  } else {
+    res.status(404).json({ error: 'Clue not found' });
+  }
+});
+app.delete('/api/clues/:id', async (req, res) => {
+  const clue = await Clue.findByPk(req.params.id);
+  if (clue) {
+    await clue.destroy();
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Clue not found' });
   }
 });
 

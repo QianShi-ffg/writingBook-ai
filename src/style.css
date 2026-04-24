@@ -434,16 +434,18 @@ input:focus, select:focus, textarea:focus {
 
 .kpi-label {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .kpi-value-row {
   display: flex;
   align-items: baseline;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .kpi-value {
@@ -451,9 +453,11 @@ input:focus, select:focus, textarea:focus {
   font-family: var(--font-mono);
   font-weight: 700;
   line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .kpi-unit {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import apiClient from '../api/client';
-import type { Book, Character, Chapter, Settings, Realm, Reference } from '../types';
+import type { Book, Character, Chapter, Settings, Realm, Reference, Clue } from '../types';
 
 export const useMainStore = defineStore('main', {
   state: () => ({
@@ -10,6 +10,7 @@ export const useMainStore = defineStore('main', {
     chapters: [] as Chapter[],
     realms: [] as Realm[],
     references: [] as Reference[],
+    clues: [] as Clue[],
     settings: {} as Settings,
     loading: false,
     error: '' as string,
@@ -139,6 +140,25 @@ export const useMainStore = defineStore('main', {
       await apiClient.delete(`/references/${id}`);
       if (!this.references) this.references = [];
       this.references = this.references.filter(r => r.id !== id);
+    },
+    async fetchClues(bookId: string) {
+      const { data } = await apiClient.get(`/clues?bookId=${bookId}`);
+      this.clues = data;
+    },
+    async createClue(clue: Partial<Clue>) {
+      const { data } = await apiClient.post('/clues', clue);
+      this.clues.push(data);
+    },
+    async updateClue(id: string, updates: Partial<Clue>) {
+      const { data } = await apiClient.put(`/clues/${id}`, updates);
+      const index = this.clues.findIndex((c) => c.id === id);
+      if (index !== -1) {
+        this.clues[index] = data;
+      }
+    },
+    async deleteClue(id: string) {
+      await apiClient.delete(`/clues/${id}`);
+      this.clues = this.clues.filter((c) => c.id !== id);
     },
     async fetchSettings() {
       const { data } = await apiClient.get('/settings');
