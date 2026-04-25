@@ -296,12 +296,14 @@ app.post('/api/writing/generate', async (req, res) => {
 
     const response = await openai.chat.completions.create({
       model,
+      reasoning_effort: "high",  // high  max
+      extra_body: {"thinking": {"type": "max"}},   // type：enabled  disabled
       messages: [
         { role: 'system', content: systemPrompt || 'You are a helpful AI writing assistant.' },
         { role: 'user', content: prompt }
       ],
       max_tokens: maxTokens,
-    });
+    } as any);
 
     res.json({ text: response.choices[0].message.content });
   } catch (error: any) {
@@ -327,13 +329,15 @@ app.post('/api/writing/generate-stream', async (req, res) => {
     console.log('[DEBUG] Requesting OpenAI Chat Completions...');
     const response = await openai.chat.completions.create({
       model,
+      reasoning_effort: "high",  // high  max
+      extra_body: {"thinking": {"type": "max"}},   // type：enabled  disabled
       messages: [
         { role: 'system', content: systemPrompt || 'You are a helpful AI writing assistant.' },
         { role: 'user', content: prompt }
       ],
       max_tokens: maxTokens,
       stream: true,
-    });
+    } as any);
     console.log('[DEBUG] Received response stream from OpenAI');
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -341,7 +345,7 @@ app.post('/api/writing/generate-stream', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     let chunkCount = 0;
-    for await (const chunk of response) {
+    for await (const chunk of response as any) {
       chunkCount++;
       const content = chunk.choices[0]?.delta?.content || '';
       if (content) {
