@@ -28,6 +28,8 @@ Book.init({
   outline: { type: DataTypes.TEXT('long') },
   outlineTree: { type: DataTypes.TEXT('long') },
   worldview: { type: DataTypes.TEXT('long') },
+  realmSetting: { type: DataTypes.TEXT('long') },
+  supplementarySetting: { type: DataTypes.TEXT('long') },
 }, { sequelize, modelName: 'Book' });
 
 // Character 模型
@@ -37,9 +39,13 @@ Character.init({
   bookId: { type: DataTypes.UUID, allowNull: false },
   name: { type: DataTypes.STRING, allowNull: false },
   role: { type: DataTypes.STRING },
-  personality: { type: DataTypes.TEXT },
-  abilities: { type: DataTypes.TEXT },
   status: { type: DataTypes.STRING },
+  gender: { type: DataTypes.STRING },
+  personality: { type: DataTypes.TEXT },
+  appearance: { type: DataTypes.TEXT },
+  bio: { type: DataTypes.TEXT },
+  relationships: { type: DataTypes.TEXT },
+  abilities: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'Character' });
 
 // Chapter 模型

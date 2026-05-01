@@ -283,7 +283,7 @@ input:focus, select:focus, textarea:focus {
 
 .timeline {
   position: relative;
-  padding-left: 20px;
+  padding-left: 50px;
 }
 
 .timeline-line {
@@ -311,7 +311,7 @@ input:focus, select:focus, textarea:focus {
 .timeline-marker {
   position: absolute;
   left: 0;
-  top: 0;
+  top: 20px;
   transform: translateX(-50%);
   width: 28px;
   height: 28px;
@@ -349,8 +349,8 @@ input:focus, select:focus, textarea:focus {
 
 .timeline-line-fill {
   position: absolute;
-  top: 0;
-  left: 20px;
+  top: 5px;
+  left: 50px;
   width: 2px;
   background-color: var(--color-success);
   transform: translateX(-50%);
@@ -373,6 +373,12 @@ input:focus, select:focus, textarea:focus {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--spacing-lg);
+}
+
+.nav-tab.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .kpi-card {
@@ -460,4 +466,20 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 1);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.chat-message.user .message-bubble {
+  background-color: var(--color-cta) !important;
+  color: #ffffff !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.chat-message.assistant .message-bubble {
+  background-color: rgba(37, 99, 235, 0.05) !important;
+  color: var(--color-text) !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  border-top-left-radius: 0 !important;
 }

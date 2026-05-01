@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { syncDb, Book, Character, Chapter, Realm, Setting, Reference, Clue } from './db';
+import { syncDb, sequelize, Book, Character, Chapter, Realm, Setting, Reference, Clue } from './db';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3002;
@@ -36,24 +36,34 @@ const getOpenAIClient = async () => {
 
 // Books API
 app.get('/api/books', async (req, res) => {
-  console.log('111111111111111');
-  const books = await Book.findAll({
-    include: [{
-      model: Chapter,
-      attributes: ['id', 'wordCount']
-    }]
-  });
-  
-  const booksWithStats = books.map((book: any) => {
-    const bookJson = book.toJSON();
-    const chapters = bookJson.Chapters || [];
-    bookJson.chapterCount = chapters.length;
-    bookJson.wordCount = chapters.reduce((sum: number, ch: any) => sum + (ch.wordCount || 0), 0);
-    delete bookJson.Chapters;
-    return bookJson;
-  });
-  
-  res.json(booksWithStats);
+  try {
+    const books = await Book.findAll({
+      attributes: [
+        'id', 'title', 'type', 'description', 'createdAt', 'updatedAt',
+        [sequelize.fn('COUNT', sequelize.col('Chapters.id')), 'chapterCount'],
+        [sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('Chapters.wordCount')), 0), 'wordCount']
+      ],
+      include: [{
+        model: Chapter,
+        attributes: [],
+        duplicating: false
+      }],
+      group: ['Book.id'],
+      order: [['updatedAt', 'DESC']]
+    });
+    
+    const booksWithStats = books.map((book: any) => {
+      const bookJson = book.toJSON();
+      bookJson.chapterCount = Number(bookJson.chapterCount || 0);
+      bookJson.wordCount = Number(bookJson.wordCount || 0);
+      return bookJson;
+    });
+    
+    res.json(booksWithStats);
+  } catch (error) {
+    console.error('Failed to fetch books:', error);
+    res.status(500).json({ error: 'Failed to fetch books' });
+  }
 });
 
 app.post('/api/books', async (req, res) => {
@@ -129,10 +139,29 @@ app.delete('/api/characters/:id', async (req, res) => {
 
 // Chapters API
 app.get('/api/chapters', async (req, res) => {
-   console.log('8888888888888888888');
   const { bookId } = req.query;
-  const chapters = bookId ? await Chapter.findAll({ where: { bookId: bookId as string }, order: [['chapter', 'ASC']] }) : await Chapter.findAll();
-  res.json(chapters);
+  try {
+    const chapters = bookId 
+      ? await Chapter.findAll({ 
+          where: { bookId: bookId as string }, 
+          attributes: { exclude: ['content', 'summary'] }, // 剔除大文本，提升查询速度
+          order: [['chapter', 'ASC']] 
+        }) 
+      : await Chapter.findAll({ attributes: { exclude: ['content', 'summary'] } });
+    res.json(chapters);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch chapters' });
+  }
+});
+
+app.get('/api/chapters/:id', async (req, res) => {
+  try {
+    const chapter = await Chapter.findByPk(req.params.id);
+    if (chapter) res.json(chapter);
+    else res.status(404).json({ error: 'Chapter not found' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch chapter detail' });
+  }
 });
 
 app.post('/api/chapters', async (req, res) => {
@@ -315,8 +344,8 @@ app.post('/api/writing/generate', async (req, res) => {
 app.post('/api/writing/generate-stream', async (req, res) => {
   console.log('[DEBUG] /api/writing/generate-stream called');
   try {
-    const { prompt, systemPrompt, maxTokens = 8192 } = req.body;
-    console.log('[DEBUG] Payload:', { promptLength: prompt?.length, systemPrompt, maxTokens });
+    const { prompt, systemPrompt, maxTokens = 8192, messages = [] } = req.body;
+    console.log('[DEBUG] Payload:', { promptLength: prompt?.length, systemPrompt, maxTokens, messagesCount: messages.length });
     
     console.log('[DEBUG] Getting OpenAI Client...');
     const openai = await getOpenAIClient();
@@ -333,6 +362,7 @@ app.post('/api/writing/generate-stream', async (req, res) => {
       extra_body: {"thinking": {"type": "max"}},   // type：enabled  disabled
       messages: [
         { role: 'system', content: systemPrompt || 'You are a helpful AI writing assistant.' },
+        ...messages,
         { role: 'user', content: prompt }
       ],
       max_tokens: maxTokens,

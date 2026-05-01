@@ -79,6 +79,14 @@ export const useMainStore = defineStore('main', {
       const { data } = await apiClient.get(`/chapters?bookId=${bookId}`);
       this.chapters = data;
     },
+    async fetchChapterDetail(id: string) {
+      const { data } = await apiClient.get(`/chapters/${id}`);
+      const index = this.chapters.findIndex(c => c.id === id);
+      if (index !== -1) {
+        this.chapters[index] = { ...this.chapters[index], ...data };
+      }
+      return data;
+    },
     async createChapter(chapter: Partial<Chapter>) {
       const { data } = await apiClient.post('/chapters', chapter);
       this.chapters.push(data);
@@ -183,7 +191,8 @@ export const useMainStore = defineStore('main', {
       prompt: string, 
       systemPrompt: string | undefined, 
       maxTokens: number | undefined, 
-      onChunk: (text: string) => void
+      onChunk: (text: string) => void,
+      messages?: {role: string, content: string}[]
     ) {
       return new Promise<void>(async (resolve, reject) => {
         const controller = new AbortController();
@@ -202,7 +211,7 @@ export const useMainStore = defineStore('main', {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ prompt, systemPrompt, maxTokens }),
+            body: JSON.stringify({ prompt, systemPrompt, maxTokens, messages }),
             signal: controller.signal
           });
 

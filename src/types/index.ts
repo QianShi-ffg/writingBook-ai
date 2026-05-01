@@ -6,6 +6,8 @@ export interface Book {
   outline?: string;
   outlineTree?: string;
   worldview?: string;
+  realmSetting?: string;
+  supplementarySetting?: string;
   chapterCount?: number;
   wordCount?: number;
   createdAt: string;
@@ -25,10 +27,14 @@ export interface Character {
   id: string;
   bookId: string;
   name: string;
-  role: string;
+  role?: string;
+  status?: string;
+  gender?: string;
   personality?: string;
+  appearance?: string;
+  bio?: string;
+  relationships?: string;
   abilities?: string;
-  status: string;
   createdAt: string;
 }
 
